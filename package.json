@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/threesigmaxyz/sanity-plugin-file-importer.git"
+    "url": "https://github.com/threesigmaxyz/sanity-plugin-file-importer.git"
   },
   "license": "AGPL-3.0",
   "author": "Three Sigma <filipe.medeiros@threesigma.xyz>",
@@ -75,6 +75,7 @@
     "typescript": "^5.0.4"
   },
   "peerDependencies": {
+    "@zip.js/zip.js": "^2.7.6",
     "react": "^18",
     "sanity": "^3"
   },

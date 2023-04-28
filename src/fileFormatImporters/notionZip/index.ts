@@ -1,80 +1,82 @@
 import type {
+  ArraySchemaType,
   PortableTextObject,
   PortableTextSpan,
   PortableTextTextBlock,
   SanityClient,
   TypedObject,
 } from 'sanity'
-import type {FileFormatToDocument} from '../../ImportViewComponent'
+import type {FileFormatImporter} from '../../ImportViewComponent'
 import mergeOrderedListsInDocument from './mergeOrderedLists'
 import type {DeserializerRule} from '@sanity/block-tools'
 import {htmlToBlocks} from '@sanity/block-tools'
-import groq from 'groq'
-
-// TODO improve types of the config
+import getFilesFromZip from './getFilesFromZip'
+import {BlobWriter} from '@zip.js/zip.js'
+import type {Entry} from '@zip.js/zip.js'
 
 interface Config<
   NotionPageProps extends Record<string, any>,
   PreparedData extends Record<string, any>
 > {
-  prepare: (props: {
+  prepare?: (props: {
     client: SanityClient
-    preparedImgUrlList: string
     pageProperties: NotionPageProps
+    htmlDocument: Document
+    imageFiles: Entry[]
   }) => Promise<PreparedData>
-  deserializingRules: (prepareResult: PreparedData) => DeserializerRule[]
-  pageToDocument: (propsAndBlocks: {
-    headerImageUrl: string
-    props: NotionPageProps
+  deserializingRules: (prepareResult: PreparedData | undefined) => DeserializerRule[]
+  pageToDocument: (data: {
+    pageProperties: NotionPageProps
     blocks: (TypedObject | PortableTextTextBlock<PortableTextObject | PortableTextSpan>)[]
     preparedData: PreparedData
-    title: string
+    htmlDocument: Document
   }) => Record<string, any>
-  documentContentSchemaType: any
+  documentContentSchemaType: ArraySchemaType<unknown>
 }
-export type {Config as NotionHtmlImporterConfig}
+export type {Config as NotionZipImporterConfig}
 
-export function notionHtmlFileToDocument<
+export function defineNotionHtmlImporterConfig<
   NotionPageProps extends Record<string, any>,
-  PrepareQueryType extends Record<string, any>
+  PreparedData extends Record<string, any>
+>(config: Config<NotionPageProps, PreparedData>): Config<NotionPageProps, PreparedData> {
+  return config
+}
+
+export default function notionZipFileFormat<
+  NotionPageProps extends Record<string, any>,
+  PreparedData extends Record<string, any>
 >({
   prepare,
   deserializingRules,
   pageToDocument,
   documentContentSchemaType,
-}: Config<NotionPageProps, PrepareQueryType>): FileFormatToDocument {
+}: Config<NotionPageProps, PreparedData>): FileFormatImporter {
   return {
     title: 'Notion HTML file',
     name: 'notionHtmlFile',
-    patchFromFile: async (file, documentId, client) => {
-      const htmlString = await file.text()
+    async patchFromFile(file, documentId, client) {
+      const {htmlFile, imageFiles} = await getFilesFromZip(file)
+
+      const htmlString = await htmlFile.getData!(new BlobWriter()).then((blob) => blob.text())
       const htmlDocument = new DOMParser().parseFromString(htmlString, 'text/html')
-      const headerImageUrl =
-        htmlDocument.body.querySelector('header img')?.getAttribute('src') ?? ''
 
       mergeOrderedListsInDocument(htmlDocument)
 
-      const pagePropertiesItems = htmlDocument.body.querySelectorAll(
+      const pagePropertiesElements = htmlDocument.body.querySelectorAll(
         'header table[class="properties"] tbody tr'
       )
 
       const pageProperties: Record<string, any> = {}
 
-      pagePropertiesItems.forEach((tr) => {
+      pagePropertiesElements.forEach((tr) => {
         const name = tr.querySelector('th')?.textContent!
         const value = tr.querySelector('td')?.textContent!
         pageProperties[name] = value
       })
 
-      const pageBody = htmlDocument.querySelector('.page-body')!
-      const images = Array.from(pageBody.querySelectorAll('img'))
-      const urlList = images
-        .map((img) => `"${img.getAttribute('src')}"`)
-        .concat(`"${headerImageUrl}"`)
-        .join(', ')
-
-      const preparedData = await prepare({
-        preparedImgUrlList: urlList,
+      const preparedData = await prepare?.({
+        htmlDocument,
+        imageFiles,
         // ! Fix this type error
         // @ts-expect-error
         pageProperties,
@@ -90,23 +92,17 @@ export function notionHtmlFileToDocument<
       )
 
       const article = pageToDocument({
-        headerImageUrl,
-        // ! Fix this type error
-        // @ts-expect-error
         props: pageProperties,
         // ! Fix this type error
         // @ts-expect-error
         blocks,
+        // ! Fix this type error
+        // @ts-expect-error
         preparedData,
-        title: htmlDocument.title,
+        htmlDocument,
       })
 
-      const draftArticleExists =
-        (await client.fetch(groq`count(*[_id == $id][0])`, {id: `drafts.${documentId}`})) > 0
-
-      return draftArticleExists
-        ? client.patch(`drafts.${documentId}`, {set: article}).commit()
-        : client.createOrReplace({_id: `drafts.${documentId}`, _type: 'article', ...article})
+      return client.createOrReplace({_id: `drafts.${documentId}`, _type: 'article', ...article})
     },
   }
 }

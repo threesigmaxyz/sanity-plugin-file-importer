@@ -10,6 +10,9 @@ dependencies:
   '@sanity/ui':
     specifier: ^1.3.2
     version: 1.3.2(react-dom@18.2.0)(react-is@18.2.0)(react@18.2.0)(styled-components@5.3.9)
+  '@zip.js/zip.js':
+    specifier: ^2.7.6
+    version: 2.7.6
   groq:
     specifier: ^3.9.0
     version: 3.9.0
@@ -2869,6 +2872,11 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /@zip.js/zip.js@2.7.6:
+    resolution: {integrity: sha512-j9gaYG84Qd3tI3X7BiOpL5bckbbAetpxtpilKnSyW5rMTnrXwH6GtXkL8rEBxnPk100exbfxNlORwFagX7fMfg==}
+    engines: {deno: '>=1.0.0', node: '>=16.5.0'}
+    dev: false
 
   /abab@2.0.6:
     resolution: {integrity: sha512-j2afSsaIENvHZN2B8GOpF566vZ5WVk5opAiMTvWgaQT8DkbOqsTfvNAvHoRGU2zzP8cPoqys+xHTRDWW8L+/BA==}

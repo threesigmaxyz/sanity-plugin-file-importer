@@ -12,14 +12,14 @@ export type PatchFromFileFn<DocumentType extends Record<string, any> = Record<st
   client: SanityClient
 ) => Promise<DocumentType>
 
-export interface FileFormatToDocument {
+export interface FileFormatImporter {
   name: string
   title: string
   patchFromFile: PatchFromFileFn
 }
 
 export interface Config {
-  fileFormatsToDocument: FileFormatToDocument[]
+  fileFormatImporters: FileFormatImporter[]
   defaultSelectedFormat?: string
   switchPaneOnSuccess?: boolean
   hideFormatSelector?: boolean
@@ -27,8 +27,8 @@ export interface Config {
 }
 export type {Config as ImportViewComponentConfig}
 
-function ImportViewComponentBuilder({
-  fileFormatsToDocument,
+function generateFileImporterViewComponent({
+  fileFormatImporters,
   defaultSelectedFormat,
   switchPaneOnSuccess = true,
   hideFormatSelector = false,
@@ -46,7 +46,7 @@ function ImportViewComponentBuilder({
         ev.preventDefault()
         const formData = new FormData(ev.target as HTMLFormElement)
         const fileFormat = formData.get('fileFormat')
-        const patchFromFile = fileFormatsToDocument.find(
+        const patchFromFile = fileFormatImporters.find(
           ({name}) => name === fileFormat
         )!.patchFromFile
         try {
@@ -58,7 +58,6 @@ function ImportViewComponentBuilder({
           })
           if (switchPaneOnSuccess) router.setView('editor')
         } catch (e) {
-          console.error(e)
           setIsLoading(false)
           toast.push({
             title: 'There was an error while importing the article',
@@ -72,21 +71,21 @@ function ImportViewComponentBuilder({
     )
 
     if (
-      !fileFormatsToDocument ||
-      !Array.isArray(fileFormatsToDocument) ||
-      fileFormatsToDocument.length === 0 ||
-      new Set(fileFormatsToDocument.map(({name}) => name)).size !== fileFormatsToDocument.length
+      !fileFormatImporters ||
+      !Array.isArray(fileFormatImporters) ||
+      fileFormatImporters.length === 0 ||
+      new Set(fileFormatImporters.map(({name}) => name)).size !== fileFormatImporters.length
     )
-      throw new Error('Invalid prop `fileFormatsToDocument`. Check documentation')
+      throw new Error('Invalid prop `fileFormatImporters`. Check documentation')
 
-    const defaultFormatName = defaultSelectedFormat ?? fileFormatsToDocument[0].name
+    const defaultFormatName = defaultSelectedFormat ?? fileFormatImporters[0].name
 
     return (
       <Card padding={4}>
         <Card paddingY={3}>
           {/* @ts-expect-error */}
           <Flex gap={4} direction="column" align="flex-start" as="form" onSubmit={onSubmit}>
-            {fileFormatsToDocument.map(({name, title}) => (
+            {fileFormatImporters.map(({name, title}) => (
               <Flex key={name} align="center" gap={2}>
                 <Radio
                   name="fileFormat"
@@ -110,4 +109,4 @@ function ImportViewComponentBuilder({
   }
 }
 
-export default ImportViewComponentBuilder
+export default generateFileImporterViewComponent

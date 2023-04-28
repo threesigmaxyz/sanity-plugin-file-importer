@@ -1,3 +1,2 @@
-export * from './fileImportView'
 export * from './ImportViewComponent'
-export * from './importers'
+export * from './fileFormatImporters'
