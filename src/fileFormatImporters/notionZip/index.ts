@@ -42,7 +42,7 @@ export function defineNotionHtmlImporterConfig<
   return config
 }
 
-export default function notionZipFileFormat<
+export function notionZipFileFormat<
   NotionPageProps extends Record<string, any>,
   PreparedData extends Record<string, any>
 >({

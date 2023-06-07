@@ -27,7 +27,7 @@ export interface Config {
 }
 export type {Config as ImportViewComponentConfig}
 
-function generateFileImporterViewComponent({
+export function generateFileImporterViewComponent({
   fileFormatImporters,
   defaultSelectedFormat,
   switchPaneOnSuccess = true,
@@ -108,5 +108,3 @@ function generateFileImporterViewComponent({
     )
   }
 }
-
-export default generateFileImporterViewComponent
