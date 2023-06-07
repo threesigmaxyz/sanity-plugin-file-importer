@@ -52,8 +52,8 @@ export function notionZipFileFormat<
   documentContentSchemaType,
 }: Config<NotionPageProps, PreparedData>): FileFormatImporter {
   return {
-    title: 'Notion HTML file',
-    name: 'notionHtmlFile',
+    title: 'Notion ZIP file with images',
+    name: 'notionZipFile',
     async patchFromFile(file, documentId, client) {
       const {htmlFile, imageFiles} = await getFilesFromZip(file)
 

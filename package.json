@@ -1,6 +1,6 @@
 {
   "name": "@threesigmaxyz/sanity-plugin-file-importer",
-  "version": "1.0.0",
+  "version": "1.0.0-beta3",
   "description": "A plugin to import files of different formats into Sanity, as docueme",
   "keywords": [
     "sanity",
