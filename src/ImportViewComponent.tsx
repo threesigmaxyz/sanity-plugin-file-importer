@@ -92,7 +92,7 @@ export function generateFileImporterViewComponent({
                   value={name}
                   required
                   hidden={hideFormatSelector}
-                  checked={name === defaultFormatName}
+                  defaultChecked={name === defaultFormatName}
                 />
                 <Label as="label">{title}</Label>
               </Flex>
